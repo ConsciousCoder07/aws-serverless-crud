@@ -1,35 +1,59 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useEffect, useState } from "react";
+import { fetchCoffees, createCoffee } from "./utils/apis";
+import { useNavigate } from "react-router-dom";
+import "./App.css";
+import reactImg from "./assets/react.svg";
 
-function App() {
-  const [count, setCount] = useState(0)
+const App = () => {
+  const [coffees, setCoffees] = useState([]);
+  const [coffeeId, setCoffeeId] = useState("");
+  const [name, setName] = useState("");
+  const [price, setPrice] = useState("");
+  const [available, setAvailable] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    fetchCoffees().then(data => setCoffees(data.Items || []));
+  }, []);
+
+  const handleAddCoffee = async () => {
+    if (!coffeeId || !name || !price) {
+      alert("Please fill all fields");
+      return;
+    }
+    const newCoffee = { coffeeId, name, price: Number(price), available };
+    await createCoffee(newCoffee);
+    setCoffees([...coffees, newCoffee]);
+    setCoffeeId("");
+    setName("");
+    setPrice("");
+    setAvailable(false);
+  };
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+    <div className="container">
+      <h1>Coffee List</h1>
+      <div className="add-coffee-form">
+        <input className="styled-input" type="text" placeholder="Coffee ID" value={coffeeId} onChange={(e) => setCoffeeId(e.target.value)} />
+        <input className="styled-input" type="text" placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} />
+        <input className="styled-input" type="number" placeholder="Price" value={price} onChange={(e) => setPrice(e.target.value)} />
+        <label>
+          <input type="checkbox" checked={available} onChange={(e) => setAvailable(e.target.checked)} /> Available
+        </label>
+        <button onClick={handleAddCoffee}>Add Coffee</button>
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
+      <div className="coffee-list">
+        {coffees.map(coffee => (
+          <div key={coffee.coffeeId} className="coffee-card" onClick={() => navigate(`/details/${coffee.coffeeId}`)}>
+            <h3>{coffee.name}</h3>
+            <img src={reactImg} alt="React Logo" />
+            <p>Price: ${coffee.price}</p>
+            <p>{coffee.available ? "Available" : "Not Available"}</p>
+          </div>
+        ))}
       </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
-}
+    </div>
+  );
+};
 
-export default App
+export default App;
